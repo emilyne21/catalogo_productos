@@ -1,0 +1,96 @@
+﻿openapi: 3.0.3
+info:
+  title: PharmaTrack - Catálogo de Productos
+  version: "1.0.0"
+servers:
+  - url: http://localhost:8083
+paths:
+  /health:
+    get:
+      summary: Healthcheck
+      responses: { "200": { "description": "OK" } }
+  /productos:
+    get:
+      summary: Listado/búsqueda de productos
+      parameters:
+        - in: query
+          name: query
+          schema: { type: string }
+        - in: query
+          name: atc
+          schema: { type: string }
+        - in: query
+          name: rx
+          schema: { type: boolean }
+        - in: query
+          name: termocadena
+          schema: { type: boolean }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, default: 20 }
+      responses:
+        "200": { description: "OK" }
+    post:
+      summary: Crear producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoCreate'
+      responses:
+        "201": { description: "Creado" }
+  /productos:bulk:
+    post:
+      summary: Carga masiva (upsert)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: { $ref: '#/components/schemas/ProductoCreate' }
+      responses: { "200": { description: "OK" } }
+  /productos/{id}:
+    get:
+      summary: Obtener por ID
+      parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
+      responses: { "200": { description: "OK" }, "404": { description: "No encontrado" } }
+    patch:
+      summary: Actualizar parcial
+      parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { type: object } }
+      responses: { "200": { description: "OK" }, "404": { description: "No encontrado" } }
+    delete:
+      summary: Eliminar
+      parameters: [ { in: path, name: id, required: true, schema: { type: string } } ]
+      responses: { "200": { description: "Eliminado" }, "404": { description: "No encontrado" } }
+components:
+  schemas:
+    Presentacion:
+      type: object
+      required: [gtin, forma, concentracion, unidades_por_paquete]
+      properties:
+        gtin: { type: string }
+        forma: { type: string, enum: [tableta,capsula,jarabe,inyeccion,otro] }
+        concentracion: { type: string }
+        unidades_por_paquete: { type: integer, minimum: 1 }
+    ProductoCreate:
+      type: object
+      required: [id, nombre, atc, rx, termocadena, presentaciones]
+      properties:
+        id: { type: string }
+        nombre: { type: string }
+        atc: { type: string }
+        rx: { type: boolean }
+        termocadena: { type: boolean }
+        keywords: { type: array, items: { type: string } }
+        presentaciones:
+          type: array
+          items: { $ref: '#/components/schemas/Presentacion' }
